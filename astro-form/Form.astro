@@ -1,0 +1,55 @@
+---
+import { uuid } from "./id";
+
+const { name, action, method = 'post', class: className, ...props } = Astro.props;
+const id = uuid(action, name ?? action.name ?? '');
+const url = new URL(Astro.request.url);
+if (Astro.request.method !== 'GET' && url.searchParams.get('astro:form') === id) {
+    throw action;
+}
+const children = await Astro.slots.render('loading');
+---
+
+<form class={className} {...props} method="post" data-method={method !== 'post' ? method : null} action={`?astro:form=${id}`} data-astro-form>
+    <template data-state="loading" set:html={children}></template>
+    <slot />
+</form>
+
+<script>
+    let p: DOMParser | undefined;
+    function isAstroForm(target: EventTarget | null): target is HTMLFormElement {
+        return target ? 'dataset' in target && (target as HTMLElement).dataset.astroForm === '' : false;
+    }
+    for (const form of document.querySelectorAll(`form[data-astro-form][id]`)) {
+        const key = `astro-form[#${form.id}]`;
+        const innerHTML = window.sessionStorage.getItem(key);
+        if (innerHTML) {
+            form.innerHTML = innerHTML;
+        }
+    }
+    window.addEventListener('submit', async (event) => {
+        if (!isAstroForm(event.target)) return;
+        event.preventDefault();
+        const action = event.target.getAttribute('action');
+        const method = (event.target.getAttribute('data-method') ?? 'post').toUpperCase();
+        const data = Object.fromEntries(new FormData(event.target as HTMLFormElement).entries());
+        event.target.reset();
+        const loading = event.target.querySelector('template[data-state="loading"]') as HTMLTemplateElement;
+        let timeout = setTimeout(() => {
+            (event.target as HTMLFormElement).replaceChildren(loading.content.cloneNode(true));
+        }, 350);
+        const url = new URL(window.location.toString());
+        url.search = action!;
+        const html = await fetch(url.toString(), {
+            method,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        }).then(res => res.text())
+        clearTimeout(timeout);
+        if (!p) p = new DOMParser();
+        const doc = p.parseFromString(html, 'text/html');
+        document.querySelector('ul')!.replaceWith(doc.querySelector('ul')!)
+    })
+</script>  

@@ -1,0 +1,24 @@
+{
+  "name": "@example/minimal",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "devDependencies": {
+    "@astrojs/node": "^1.0.0",
+    "astro": "^1.0.5"
+  },
+  "dependencies": {
+    "micromorph": "^0.3.1"
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "astro@1.0.5": "patches/astro@1.0.5.patch"
+    }
+  }
+}
