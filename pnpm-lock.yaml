@@ -1,21 +1,23 @@
 lockfileVersion: 5.4
 
 patchedDependencies:
-  astro@1.0.5:
-    hash: kko7cl566zr2wvmxgba62uaxby
-    path: patches/astro@1.0.5.patch
+  astro@1.0.6:
+    hash: xdscoy2gtpp6gceiuyekbdphz4
+    path: patches/astro@1.0.6.patch
 
 specifiers:
   '@astrojs/node': ^1.0.0
-  astro: ^1.0.5
+  astro: ^1.0.6
   micromorph: ^0.3.1
+  ultrahtml: ^0.0.4
 
 dependencies:
   micromorph: 0.3.1
+  ultrahtml: 0.0.4
 
 devDependencies:
   '@astrojs/node': 1.0.0
-  astro: 1.0.5_kko7cl566zr2wvmxgba62uaxby
+  astro: 1.0.6_xdscoy2gtpp6gceiuyekbdphz4
 
 packages:
 
@@ -608,8 +610,8 @@ packages:
       tslib: 2.4.0
     dev: true
 
-  /astro/1.0.5_kko7cl566zr2wvmxgba62uaxby:
-    resolution: {integrity: sha512-+L45/SJfJ4yxQuRaaxXeIxf3BXGj80m7BIc9/7Cq5zFMxdvFLJ+4u6srntWY+4KlcrUcVBC/1mnhGbD80vYJQQ==}
+  /astro/1.0.6_xdscoy2gtpp6gceiuyekbdphz4:
+    resolution: {integrity: sha512-QAkdkzP3PbauiO4YnOgVTWY6z26heKruoXW9TnN8Bbmwtf7DUFIchi6CFSAVYSONX8XtRnj+p6fCkk06OWfJ4w==}
     engines: {node: ^14.18.0 || >=16.12.0, npm: '>=6.14.0'}
     hasBin: true
     dependencies:
@@ -2824,6 +2826,10 @@ packages:
     engines: {node: '>=4.2.0'}
     hasBin: true
     dev: true
+
+  /ultrahtml/0.0.4:
+    resolution: {integrity: sha512-LcNKWPic3v5WXEmhpCwisEnhRPYg8qz00jpY9+vE/RrbbSmaxzJKLrdJgSdTdJCUf9VzwuYiGmc3G0ApfA0uiA==}
+    dev: false
 
   /unherit/3.0.0:
     resolution: {integrity: sha512-UmvIQZGEc9qdLIQ8mv8/61n6PiMgfbOoASPKHpCvII5srShCQSa6jSjBjlZOR4bxt2XnT6uo6csmPKRi+zQ0Jg==}

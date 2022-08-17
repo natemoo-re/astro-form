@@ -1,7 +1,13 @@
 ---
-const { id } = Astro.props;
+import { uuid } from "./id";
+
+const id = uuid(Astro.request, 'outlet');
+const url = new URL(Astro.request.url);
+if (Astro.request.method === 'GET' && url.searchParams.get('astro:outlet') === id) {
+    throw () => Astro.slots.render('default')
+}
 ---
 
-<astro-outlet id={id}>
+<astro-outlet id={id} file={import.meta.url}>
     <slot />
 </astro-outlet>

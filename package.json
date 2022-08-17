@@ -11,14 +11,10 @@
   },
   "devDependencies": {
     "@astrojs/node": "^1.0.0",
-    "astro": "^1.0.5"
+    "astro": "^1.0.6"
   },
   "dependencies": {
-    "micromorph": "^0.3.1"
-  },
-  "pnpm": {
-    "patchedDependencies": {
-      "astro@1.0.5": "patches/astro@1.0.5.patch"
-    }
+    "micromorph": "^0.3.1",
+    "ultrahtml": "^0.0.4"
   }
 }

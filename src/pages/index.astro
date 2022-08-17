@@ -4,15 +4,15 @@ import Layout from '../layouts/Base.astro'
 
 import { todos, addTodo, deleteTodo } from "../todos";
 
-const addItem = ({ title }: { title: string }) => addTodo(title);
+const addItem = async ({ title }: { title: string }) => addTodo(title);
 const deleteItem = ({ id }: { id: string }) => deleteTodo(id);
 ---
 
 <Layout>
 	<Form action={addItem}>
 		<div class="add">
-			<input type="text" name="title" />
-			<input type="submit" value="Submit">
+			<input placeholder="length" type="text" name="title" required />
+			<input type="submit" value="Submit" />
 		</div>
 	</Form>
 	

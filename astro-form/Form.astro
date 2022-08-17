@@ -1,17 +1,37 @@
 ---
 import { uuid } from "./id";
+import getValidators from "./validate";
 
-const { name, action, method = 'post', class: className, ...props } = Astro.props;
+const { name, action, method = 'post', class: className, 'server:validate': serverValidate = false, ...props } = Astro.props;
 const id = uuid(action, name ?? action.name ?? '');
 const url = new URL(Astro.request.url);
 if (Astro.request.method !== 'GET' && url.searchParams.get('astro:form') === id) {
-    throw action;
+    if (serverValidate) {
+        const html = await Astro.slots.render('default');
+        throw (data: any) => {
+            const validators = getValidators(html);
+            const errors: Record<string, boolean> = {};
+            for (const [key, value] of Object.entries(data)) {
+                if (key in validators) {
+                    const validationErrors = validators[key](value)
+                    if (validationErrors.length > 0) {
+                        errors[key] = validationErrors;
+                    }
+                }
+            }
+            if (Object.keys(errors).length > 0) {
+                throw { errors };
+            }
+            return action(data)
+        }
+    }
+    throw action
 }
-const children = await Astro.slots.render('loading');
+const loading = await Astro.slots.render('loading');
 ---
 
 <form class={className} {...props} method="post" data-method={method !== 'post' ? method : null} action={`?astro:form=${id}`} data-astro-form>
-    <template data-state="loading" set:html={children}></template>
+    <template data-state="loading" set:html={loading}></template>
     <slot />
 </form>
 
@@ -20,36 +40,27 @@ const children = await Astro.slots.render('loading');
     function isAstroForm(target: EventTarget | null): target is HTMLFormElement {
         return target ? 'dataset' in target && (target as HTMLElement).dataset.astroForm === '' : false;
     }
-    for (const form of document.querySelectorAll(`form[data-astro-form][id]`)) {
-        const key = `astro-form[#${form.id}]`;
-        const innerHTML = window.sessionStorage.getItem(key);
-        if (innerHTML) {
-            form.innerHTML = innerHTML;
-        }
-    }
     window.addEventListener('submit', async (event) => {
-        if (!isAstroForm(event.target)) return;
-        event.preventDefault();
-        const action = event.target.getAttribute('action');
-        const method = (event.target.getAttribute('data-method') ?? 'post').toUpperCase();
-        const data = Object.fromEntries(new FormData(event.target as HTMLFormElement).entries());
-        event.target.reset();
-        const loading = event.target.querySelector('template[data-state="loading"]') as HTMLTemplateElement;
-        let timeout = setTimeout(() => {
-            (event.target as HTMLFormElement).replaceChildren(loading.content.cloneNode(true));
-        }, 350);
-        const url = new URL(window.location.toString());
-        url.search = action!;
-        const html = await fetch(url.toString(), {
-            method,
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
-        }).then(res => res.text())
-        clearTimeout(timeout);
-        if (!p) p = new DOMParser();
-        const doc = p.parseFromString(html, 'text/html');
-        document.querySelector('ul')!.replaceWith(doc.querySelector('ul')!)
+        // if (!isAstroForm(event.target)) return;
+        // event.preventDefault();
+        // const action = event.target.getAttribute('action');
+        // const submit = (event.target as HTMLFormElement).querySelector('[type="submit"]')!;
+        // const method = (event.target.getAttribute('data-method') ?? 'post').toUpperCase();
+        // const data = Object.fromEntries(new FormData(event.target as HTMLFormElement).entries());
+        // event.target.reset();
+        // submit.setAttribute('disabled', '');
+        // const url = new URL(window.location.toString());
+        // url.search = action!;
+        // const html = await fetch(url.toString(), {
+        //     method,
+        //     headers: {
+        //         'Content-Type': 'application/json',
+        //     },
+        //     body: JSON.stringify(data),
+        // }).then(res => res.text());
+        // submit.removeAttribute('disabled');
+        // if (!p) p = new DOMParser();
+        // const doc = p.parseFromString(html, 'text/html');
+        // document.querySelector('ul')!.replaceWith(doc.querySelector('ul')!)
     })
 </script>  
