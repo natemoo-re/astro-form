@@ -1,13 +1,56 @@
 ---
 import { uuid } from "./id";
-
-const id = uuid(Astro.request, 'outlet');
+const { name = uuid(Astro.request) } = Astro.props;
 const url = new URL(Astro.request.url);
-if (Astro.request.method === 'GET' && url.searchParams.get('astro:outlet') === id) {
-    throw () => Astro.slots.render('default')
+if (
+  Astro.request.method === "GET" &&
+  url.searchParams.get("astro:outlet") === name
+) {
+  throw () => Astro.slots.render("default");
 }
 ---
 
-<astro-outlet id={id} file={import.meta.url}>
-    <slot />
+<astro-outlet style="display:contents;" name={name}>
+  <slot />
 </astro-outlet>
+
+<script>
+  //   customElements.define('astro-outlet', class AstroOutlet extends HTMLElement {
+  //       constructor() {
+  //           super();
+  //           this.normalizeSync = this.normalizeSync.bind(this);
+  //           this.navigate = this.navigate.bind(this);
+  //       }
+  //       normalizeSync() {
+  //           for (const el of this.querySelectorAll('[onchange="this.form.submit()"]')) {
+  //               el.removeAttribute('onchange');
+  //               el.setAttribute('data-astro-sync', '');
+  //           }
+  //       }
+  //       async navigate(event: Event) {
+  //           console.log('navigate', this.getAttribute('name'))
+  //           event.preventDefault();
+  //           event.stopPropagation();
+  //           const url = new URL(location.toString());
+  //           url.searchParams.set('astro:outlet', this.getAttribute('name')!);
+  //           await fetch(url.toString())
+  //               .then(res => res.text())
+  //               .then((html) => {
+  //                   if (this.innerHTML !== html) {
+  //                       this.innerHTML = html;
+  //                       // const clone = this.cloneNode(false) as HTMLElement;
+  //                       // clone.innerHTML = html;
+  //                       // morph(this, clone);
+  //                   }
+  //               })
+  //           this.normalizeSync();
+  //       }
+  //       connectedCallback() {
+  //           this.normalizeSync();
+  //           this.addEventListener('astro:navigate', this.navigate);
+  //       }
+  //       disconnectedCallback() {
+  //           this.removeEventListener('astro:navigate', this.navigate);
+  //       }
+  //   })
+</script>

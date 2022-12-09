@@ -2,18 +2,31 @@
 import { uuid } from "./id";
 import getValidators from "./validate";
 
-const { name, action, method = 'post', class: className, 'server:validate': serverValidate = false, ...props } = Astro.props;
-const id = uuid(action, name ?? action.name ?? '');
+const {
+    name,
+    action,
+    method = "post",
+    class: className,
+    "server:validate": serverValidate = false,
+    update: outlets = '',
+    ...props
+} = Astro.props;
+const id = uuid(action, name ?? action.name ?? "");
 const url = new URL(Astro.request.url);
-if (Astro.request.method !== 'GET' && url.searchParams.get('astro:form') === id) {
+let outlet: string | undefined = Array.isArray(outlets) ? outlets.join(' ') : outlets;
+if (!outlet?.trim()) outlet = undefined;
+if (
+    Astro.request.method !== "GET" &&
+    url.searchParams.get("astro:form") === id
+) {
     if (serverValidate) {
-        const html = await Astro.slots.render('default');
+        const html = await Astro.slots.render("default");
         throw (data: any) => {
             const validators = getValidators(html);
             const errors: Record<string, boolean> = {};
             for (const [key, value] of Object.entries(data)) {
                 if (key in validators) {
-                    const validationErrors = validators[key](value)
+                    const validationErrors = validators[key](value);
                     if (validationErrors.length > 0) {
                         errors[key] = validationErrors;
                     }
@@ -22,45 +35,77 @@ if (Astro.request.method !== 'GET' && url.searchParams.get('astro:form') === id)
             if (Object.keys(errors).length > 0) {
                 throw { errors };
             }
-            return action(data)
-        }
+            return action(data);
+        };
     }
-    throw action
+    throw action;
 }
-const loading = await Astro.slots.render('loading');
+// const loading = await Astro.slots.render("loading");
 ---
 
-<form class={className} {...props} method="post" data-method={method !== 'post' ? method : null} action={`?astro:form=${id}`} data-astro-form>
-    <template data-state="loading" set:html={loading}></template>
+<form
+    class={className}
+    {...props}
+    method="post"
+    data-method={method !== "post" ? method : null}
+    action={`?astro:form=${id}`}
+    data-astro-form
+    data-astro-update={outlet}
+>
     <slot />
 </form>
 
 <script>
-    let p: DOMParser | undefined;
-    function isAstroForm(target: EventTarget | null): target is HTMLFormElement {
-        return target ? 'dataset' in target && (target as HTMLElement).dataset.astroForm === '' : false;
+    function isAstroForm(
+        target: EventTarget | null
+    ): target is HTMLFormElement {
+        return !!(target as Element)?.closest('[data-astro-form]');
     }
-    window.addEventListener('submit', async (event) => {
-        // if (!isAstroForm(event.target)) return;
-        // event.preventDefault();
-        // const action = event.target.getAttribute('action');
-        // const submit = (event.target as HTMLFormElement).querySelector('[type="submit"]')!;
-        // const method = (event.target.getAttribute('data-method') ?? 'post').toUpperCase();
-        // const data = Object.fromEntries(new FormData(event.target as HTMLFormElement).entries());
-        // event.target.reset();
-        // submit.setAttribute('disabled', '');
-        // const url = new URL(window.location.toString());
-        // url.search = action!;
-        // const html = await fetch(url.toString(), {
-        //     method,
-        //     headers: {
-        //         'Content-Type': 'application/json',
-        //     },
-        //     body: JSON.stringify(data),
-        // }).then(res => res.text());
-        // submit.removeAttribute('disabled');
-        // if (!p) p = new DOMParser();
-        // const doc = p.parseFromString(html, 'text/html');
-        // document.querySelector('ul')!.replaceWith(doc.querySelector('ul')!)
-    })
-</script>  
+    async function update(event: Event) {
+        if (!isAstroForm(event.target)) return;
+        if (event.type === 'change' && !event.target.closest('[data-astro-sync]')) return;
+        event.preventDefault();
+        const form = event.target.closest('form');
+        const action = form?.getAttribute("action");
+        const submit = (form as HTMLFormElement).querySelector(
+            '[type="submit"]'
+        )!;
+        const method = (
+            form?.getAttribute("data-method") ?? "post"
+        ).toUpperCase();
+        const data = Object.fromEntries(
+            new FormData(form as HTMLFormElement).entries()
+        );
+        if (event.type === 'submit') {
+            form?.reset();
+        }
+        submit?.setAttribute("disabled", "");
+        const url = new URL(window.location.toString());
+        url.search = action!;
+        try {
+            await fetch(url.toString(), {
+                method,
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data),
+                redirect: 'manual'
+            })
+        } catch (e) {}
+        submit?.removeAttribute("disabled");
+        const outlets = new Set<Element>();
+        if (form?.hasAttribute('data-astro-update')) {
+            for (const name of form.getAttribute('data-astro-update')!.split(' ')) {
+                for (const el of document.querySelectorAll(`astro-outlet[name="${name}"]`)) {
+                    outlets.add(el);
+                }
+            }
+        }
+        const navigate = new CustomEvent('astro:navigate');
+        for (const outlet of outlets) {
+            outlet.dispatchEvent(navigate)
+        }
+    }
+    // window.addEventListener("submit", update);
+    // window.addEventListener("change", update);
+</script>

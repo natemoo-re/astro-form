@@ -1,13 +1,13 @@
 lockfileVersion: 5.4
 
 patchedDependencies:
-  astro@1.0.6:
-    hash: xdscoy2gtpp6gceiuyekbdphz4
-    path: patches/astro@1.0.6.patch
+  astro@1.0.5:
+    hash: kko7cl566zr2wvmxgba62uaxby
+    path: patches/astro@1.0.5.patch
 
 specifiers:
   '@astrojs/node': ^1.0.0
-  astro: ^1.0.6
+  astro: 1.0.5
   micromorph: ^0.3.1
   ultrahtml: ^0.0.4
 
@@ -17,7 +17,7 @@ dependencies:
 
 devDependencies:
   '@astrojs/node': 1.0.0
-  astro: 1.0.6_xdscoy2gtpp6gceiuyekbdphz4
+  astro: 1.0.5_kko7cl566zr2wvmxgba62uaxby
 
 packages:
 
@@ -610,8 +610,8 @@ packages:
       tslib: 2.4.0
     dev: true
 
-  /astro/1.0.6_xdscoy2gtpp6gceiuyekbdphz4:
-    resolution: {integrity: sha512-QAkdkzP3PbauiO4YnOgVTWY6z26heKruoXW9TnN8Bbmwtf7DUFIchi6CFSAVYSONX8XtRnj+p6fCkk06OWfJ4w==}
+  /astro/1.0.5_kko7cl566zr2wvmxgba62uaxby:
+    resolution: {integrity: sha512-+L45/SJfJ4yxQuRaaxXeIxf3BXGj80m7BIc9/7Cq5zFMxdvFLJ+4u6srntWY+4KlcrUcVBC/1mnhGbD80vYJQQ==}
     engines: {node: ^14.18.0 || >=16.12.0, npm: '>=6.14.0'}
     hasBin: true
     dependencies:
@@ -2657,6 +2657,7 @@ packages:
 
   /sourcemap-codec/1.4.8:
     resolution: {integrity: sha512-9NykojV5Uih4lgo5So5dtw+f0JgJX30KCNI8gwhz2J9A15wD0Ml6tjHKwf6fTSa6fAdVBdZeNOs9eJ71qCk8vA==}
+    deprecated: Please use @jridgewell/sourcemap-codec instead
     dev: true
 
   /space-separated-tokens/2.0.1:

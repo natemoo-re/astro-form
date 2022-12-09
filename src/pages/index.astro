@@ -1,31 +1,105 @@
 ---
-import { Form } from "../../astro-form";
-import Layout from '../layouts/Base.astro'
+import Layout from "../layouts/Base.astro";
+import { todos, addTodo, deleteTodo, updateTodo } from "../todos";
 
-import { todos, addTodo, deleteTodo } from "../todos";
+import { Form, Outlet } from "../../astro-form";
+// const [TodoForm, TodoOutlet] = createForm();
 
 const addItem = async ({ title }: { title: string }) => addTodo(title);
-const deleteItem = ({ id }: { id: string }) => deleteTodo(id);
+const updateItem = async ({ id, color }: { id: string; color: string }) =>
+	updateTodo(id, { color });
+// const deleteItem = ({ id }: { id: string }) => deleteTodo(id);
+
+const options = [
+	"red",
+	"orange",
+	"yellow",
+	"green",
+	"blue",
+	"indigio",
+	"violet",
+];
 ---
 
+<style is:global>
+	* {
+		box-sizing: border-box;
+		margin: 0;
+		padding: 0;
+	}
+	:root {
+		font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+			Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue",
+			sans-serif;
+	}
+	body {
+		padding: 1.5rem;
+	}
+	input {
+		padding: 0.5em 1em;
+	}
+	ul {
+		margin-top: 2em;
+		display: flex;
+		flex-direction: column;
+		gap: 1em;
+		list-style: none;
+	}
+	li {
+		display: flex;
+		align-items: center;
+		gap: 0.5em;
+	}
+	.add {
+		margin-top: 2rem;
+		display: flex;
+		gap: 1em;
+	}
+</style>
+
 <Layout>
-	<Form action={addItem}>
+	<Form action={addItem} update="list">
 		<div class="add">
-			<input placeholder="length" type="text" name="title" required />
+			<input placeholder="TODO" type="text" name="title" required />
 			<input type="submit" value="Submit" />
 		</div>
 	</Form>
-	
-	<ul>
-		{todos.map(todo => (
-			<li>
-				<Form method="delete" action={deleteItem}>
-					<input type="text" name="id" value={todo.id} hidden />
-					<input type="submit" value="-" />
-				</Form>
-				{todo.title}
-			</li>
-		))}
-	</ul>
-</Layout>
 
+	<Outlet name="list">
+		<ul>
+			{
+				todos.map((todo) => (
+					<li>
+						<Form action={updateItem} update={todo.id}>
+							<input
+								type="text"
+								name="id"
+								value={todo.id}
+								hidden
+							/>
+							<select
+								name="color"
+								value={todo.color}
+								onchange="this.form.submit()"
+							>
+								{options.map((opt) => (
+									<option
+										value={opt}
+										selected={todo.color === opt}
+									>
+										{opt}
+									</option>
+								))}
+							</select>
+						</Form>
+						<Outlet name={todo.id}>
+							<div style={{ color: todo.color }}>
+								{todo.title}
+							</div>
+						</Outlet>
+					</li>
+				))
+			}
+		</ul>
+	</Outlet>
+</Layout>
