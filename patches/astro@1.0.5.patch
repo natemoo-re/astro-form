@@ -1,38 +1,46 @@
 diff --git a/dist/core/render/core.js b/dist/core/render/core.js
-index 8f72fbb94e69981ac96103b0d94095111aed0efd..f0acec03caf1d3087eb96a6f4f6146c82e0a43e7 100644
+index 8f72fbb94e69981ac96103b0d94095111aed0efd..74422e118ffd826021eac17ad6a8c47836a4c708 100644
 --- a/dist/core/render/core.js
 +++ b/dist/core/render/core.js
-@@ -91,6 +91,33 @@ async function render(opts) {
+@@ -91,6 +91,41 @@ async function render(opts) {
      streaming,
      status
    });
-+  if (request.method !== 'GET') {
-+    let action;
-+    try {
-+      const oldResult = Object.assign({}, result);
-+      await renderPage(oldResult, Component, pageProps, null, false);
-+    } catch (p) {
-+      if (typeof p === 'function') {
-+        action = p;
-+      }
-+    }
-+    if (action) {
-+      const type = request.headers.get('Content-Type');
-+      let data = {};
-+      if (type === 'application/json') {
-+          data = await request.clone().json();
-+      } else if (type === 'application/x-www-form-urlencoded') {
-+          data = Object.fromEntries((await request.clone().formData()).entries());
-+      }
-+      await action(data);
-+      return new Response(null, {
-+        status: 302,
-+        headers: {
-+          Location: pathname
-+        }
-+      });
-+    }
-+  }
++   if (request.method !== 'GET') {
++   let action;
++   try {
++     const oldResult = Object.assign({}, result);
++     await renderPage(oldResult, Component, pageProps, null, false);
++   } catch (p) {
++     if (typeof p === 'function') {
++       action = p;
++     }
++   }
++   if (action) {
++     const type = request.headers.get('Content-Type');
++     let data = {};
++     if (type === 'application/json') {
++         data = await request.clone().json();
++     } else if (type === 'application/x-www-form-urlencoded') {
++         data = Object.fromEntries((await request.clone().formData()).entries());
++     }
++     const result = await action(data);
++     if (result?.errors) {
++      return new Response(JSON.stringify({ errors: result.errors }), {
++       status: 400,
++       headers: {
++         'Content-Type': 'application/json'
++       }
++     });
++     }
++     return new Response(null, {
++       status: 302,
++       headers: {
++         Location: pathname
++       }
++     });
++   }
++ }
    if (typeof mod.components === "object") {
      Object.assign(pageProps, { components: mod.components });
    }

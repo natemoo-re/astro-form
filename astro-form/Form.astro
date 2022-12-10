@@ -1,55 +1,117 @@
 ---
 import { uuid } from "./id";
+import getValidators from "./validate";
 
-const { name, action, method = 'post', class: className, ...props } = Astro.props;
-const id = uuid(action, name ?? action.name ?? '');
+const {
+  name,
+  action,
+  method = "post",
+  "server:validate": serverValidate = false,
+  class: className,
+  ...props
+} = Astro.props;
+const id = uuid(action, name ?? action.name ?? "");
 const url = new URL(Astro.request.url);
-if (Astro.request.method !== 'GET' && url.searchParams.get('astro:form') === id) {
-    throw action;
+if (
+  Astro.request.method !== "GET" &&
+  url.searchParams.get("astro:form") === id
+) {
+  if (serverValidate) {
+    const html = await Astro.slots.render("default");
+    const validators = getValidators(html);
+    throw (data: any) => {
+      const errors: Record<string, boolean> = {};
+      for (const [key, value] of Object.entries(data)) {
+        if (key in validators) {
+          const validationErrors = validators[key](value);
+          if (validationErrors.length > 0) {
+            errors[key] = validationErrors;
+          }
+        }
+      }
+      if (Object.keys(errors).length > 0) {
+        return { errors };
+      }
+      return action(data);
+    };
+  }
+  throw action;
 }
-const children = await Astro.slots.render('loading');
+// const children = await Astro.slots.render("loading");
 ---
 
-<form class={className} {...props} method="post" data-method={method !== 'post' ? method : null} action={`?astro:form=${id}`} data-astro-form>
-    <template data-state="loading" set:html={children}></template>
-    <slot />
+<form
+  class={className}
+  {...props}
+  method="post"
+  data-method={method !== "post" ? method : null}
+  action={`?astro:form=${id}`}
+  data-astro-form
+>
+  <!-- <template data-state="loading" set:html={children} /> -->
+  <slot />
 </form>
 
 <script>
-    let p: DOMParser | undefined;
-    function isAstroForm(target: EventTarget | null): target is HTMLFormElement {
-        return target ? 'dataset' in target && (target as HTMLElement).dataset.astroForm === '' : false;
+  let p: DOMParser | undefined;
+  function isAstroForm(target: EventTarget | null): target is HTMLFormElement {
+    return target
+      ? "dataset" in target && (target as HTMLElement).dataset.astroForm === ""
+      : false;
+  }
+  for (const form of document.querySelectorAll(`form[data-astro-form][id]`)) {
+    const key = `astro-form[#${form.id}]`;
+    const innerHTML = window.sessionStorage.getItem(key);
+    if (innerHTML) {
+      form.innerHTML = innerHTML;
     }
-    for (const form of document.querySelectorAll(`form[data-astro-form][id]`)) {
-        const key = `astro-form[#${form.id}]`;
-        const innerHTML = window.sessionStorage.getItem(key);
-        if (innerHTML) {
-            form.innerHTML = innerHTML;
+  }
+  window.addEventListener("submit", async (event) => {
+    if (!isAstroForm(event.target)) return;
+    event.preventDefault();
+    const action = event.target.getAttribute("action");
+    const method = (
+      event.target.getAttribute("data-method") ?? "post"
+    ).toUpperCase();
+    const data = Object.fromEntries(
+      new FormData(event.target as HTMLFormElement).entries()
+    );
+    event.target.reset();
+    const loading = event.target.querySelector(
+      'template[data-state="loading"]'
+    ) as HTMLTemplateElement | undefined;
+    let timeout = setTimeout(() => {
+      if (loading) {
+        (event.target as HTMLFormElement).replaceChildren(
+          loading.content.cloneNode(true)
+        );
+      }
+    }, 350);
+    const url = new URL(window.location.toString());
+    url.search = action!;
+    const res = await fetch(url.toString(), {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+    clearTimeout(timeout);
+    if (!p) p = new DOMParser();
+    if (res.status === 200) {
+      const html = await res.text();
+      const doc = p.parseFromString(html, "text/html");
+      document.querySelector("ul")!.replaceWith(doc.querySelector("ul")!);
+    } else {
+      const { errors } = await res.json();
+      for (const [name, problems] of Object.entries(errors)) {
+        const item = event.target.elements.namedItem(name);
+        const validity: Record<string, boolean> = {};
+        for (const key in item.validity) {
+          validity[key] = problems.includes(key) || item.validity[key];
         }
+        console.log(item.validationMessage);
+      }
     }
-    window.addEventListener('submit', async (event) => {
-        if (!isAstroForm(event.target)) return;
-        event.preventDefault();
-        const action = event.target.getAttribute('action');
-        const method = (event.target.getAttribute('data-method') ?? 'post').toUpperCase();
-        const data = Object.fromEntries(new FormData(event.target as HTMLFormElement).entries());
-        event.target.reset();
-        const loading = event.target.querySelector('template[data-state="loading"]') as HTMLTemplateElement;
-        let timeout = setTimeout(() => {
-            (event.target as HTMLFormElement).replaceChildren(loading.content.cloneNode(true));
-        }, 350);
-        const url = new URL(window.location.toString());
-        url.search = action!;
-        const html = await fetch(url.toString(), {
-            method,
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
-        }).then(res => res.text())
-        clearTimeout(timeout);
-        if (!p) p = new DOMParser();
-        const doc = p.parseFromString(html, 'text/html');
-        document.querySelector('ul')!.replaceWith(doc.querySelector('ul')!)
-    })
-</script>  
+  });
+</script>
