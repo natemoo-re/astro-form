@@ -9,7 +9,7 @@ const deleteItem = ({ id }: { id: string }) => deleteTodo(id);
 ---
 
 <Layout>
-  <Form server:validate action={addItem}>
+  <Form action={addItem}>
     <div class="add">
       <input type="text" name="title" required />
       <input type="submit" value="Submit" />
@@ -22,7 +22,7 @@ const deleteItem = ({ id }: { id: string }) => deleteTodo(id);
         <li>
           <Form method="delete" action={deleteItem}>
             <input type="text" name="id" value={todo.id} hidden />
-            <input type="submit" value="-" />
+            <button type="submit">-</button>
           </Form>
           {todo.title}
         </li>
